@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* --- CSS STYLING DASAR --- */
+        :root {
+            --primary: #4F46E5;    
+            --secondary: #F59E0B;  
+            --tertiary: #14B8A6;   
+            --success: #10B981;
+            --error: #EF4444;
+            --dark: #1E293B;
+            --bg: #EEF2FF;
+            --calm: #10B981;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            background-image: radial-gradient(#C7D2FE 2px, transparent 2px);
+            background-size: 30px 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .game-container {
+            background: white;
+            padding: 30px 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.15);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            display: none; 
+        }
+
+        #login-page { display: block; }
+
+        /* --- CUSTOM POP-UP --- */
+        .popup-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(30, 41, 59, 0.7); display: none;
+            justify-content: center; align-items: center; z-index: 1000;
+            backdrop-filter: blur(3px);
+        }
+        .popup-box {
+            background: white; padding: 25px; border-radius: 20px;
+            text-align: center; width: 90%; max-width: 320px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+            animation: popIn 0.3s ease-out;
+        }
+        .popup-icon { font-size: 50px; margin-bottom: 10px; }
+        .popup-title { font-size: 20px; font-weight: bold; color: var(--dark); margin: 0 0 10px 0; }
+        .popup-message { font-size: 15px; color: #4B5563; margin-bottom: 20px; line-height: 1.5; }
+        .popup-btn-group { display: flex; gap: 10px; justify-content: center; }
+        .popup-btn { padding: 12px 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; flex: 1; transition: transform 0.1s; font-size: 14px; }
+        .popup-btn:active { transform: scale(0.95); }
+        .popup-btn-ok { background: var(--primary); color: white; box-shadow: 0 4px 0px #4338CA; }
+        .popup-btn-ok:active { box-shadow: 0 0px 0px #4338CA; transform: translateY(4px); }
+        .popup-btn-cancel { background: #E2E8F0; color: #475569; box-shadow: 0 4px 0px #CBD5E1; }
+        .popup-btn-cancel:active { box-shadow: 0 0px 0px #CBD5E1; transform: translateY(4px); }
+
+        /* --- STYLING FORM LOGIN --- */
+        .login-icon { font-size: 60px; margin-bottom: 10px; }
+        .input-group { margin: 20px 0; text-align: left; }
+        .input-group label { font-weight: bold; color: var(--dark); font-size: 14px; margin-bottom: 5px; display: block; }
+        .username-input { width: 100%; padding: 15px; border: 2px solid #CBD5E1; border-radius: 12px; font-size: 16px; box-sizing: border-box; outline: none; transition: border 0.3s; }
+        .username-input:focus { border-color: var(--primary); }
+
+        /* --- STYLING MENU UTAMA & TOMBOL --- */
+        .landing-title { color: var(--primary); margin-top: 0; font-size: 26px; font-weight: 800; }
+        .landing-subtitle { color: #6B7280; margin-bottom: 25px; font-weight: 500; }
+        .player-greeting { background: #E0E7FF; color: var(--primary); padding: 8px 15px; border-radius: 20px; display: inline-block; font-weight: bold; margin-bottom: 20px; font-size: 14px; }
+
+        .menu-btn { background-color: var(--primary); color: white; border: none; border-radius: 12px; width: 100%; padding: 16px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3); transition: transform 0.2s; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .menu-btn:hover { transform: translateY(-3px); }
+        .menu-btn.math-btn { background-color: var(--secondary); box-shadow: 0 4px 6px rgba(245, 158, 11, 0.3); }
+        .menu-btn.sentence-btn { background-color: var(--tertiary); box-shadow: 0 4px 6px rgba(20, 184, 166, 0.3); }
+        .menu-btn.typing-btn { background-color: #8B5CF6; box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3); }
+        .menu-btn.sim-btn { background-color: #059669; box-shadow: 0 4px 6px rgba(5, 150, 105, 0.3); }
+        .menu-btn.leaderboard-btn { background-color: var(--dark); box-shadow: 0 4px 6px rgba(30, 41, 59, 0.3); }
+
+        .back-btn { position: absolute; top: 15px; left: 15px; background: #F3F4F6; color: #374151; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; z-index: 10; }
+        .level-info { font-weight: bold; color: #6B7280; margin-bottom: 5px; margin-top: 10px; }
+        .message { margin-top: 20px; font-size: 18px; font-weight: bold; min-height: 27px; }
+
+        /* --- STYLING PAPAN PERINGKAT --- */
+        .leaderboard-section { text-align: left; margin-bottom: 20px; background: #F8FAFC; padding: 15px; border-radius: 15px; border: 1px solid #E2E8F0; }
+        .leaderboard-title { font-size: 16px; font-weight: bold; color: var(--dark); margin: 0 0 10px 0; border-bottom: 2px solid #CBD5E1; padding-bottom: 5px; }
+        .record-item { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; border-bottom: 1px dashed #E2E8F0; }
+        .record-item:last-child { border-bottom: none; }
+        .record-user { font-weight: bold; color: var(--primary); }
+        .record-time { color: var(--error); font-weight: bold; }
+        .empty-record { color: #9CA3AF; font-size: 14px; font-style: italic; text-align: center; }
+
+        /* --- ANIMASI --- */
+        .success-anim { border-color: var(--success) !important; background-color: var(--success) !important; color: white !important; box-shadow: 0 4px 0px #047857 !important;}
+        .error-anim { border-color: var(--error) !important; background-color: var(--error) !important; color: white !important; box-shadow: 0 4px 0px #B91C1C !important; animation: shake 0.4s; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-5px); } 50% { transform: translateX(5px); } }
+        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 80% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+
+        /* --- KOMPONEN GAME KETIK CEPAT --- */
+        .typing-text-display { font-size: 26px; font-weight: 900; margin: 20px 0; color: var(--primary); padding: 20px; background: #F8FAFC; border-radius: 15px; border: 3px dashed #CBD5E1; letter-spacing: 2px; text-transform: uppercase;}
+        .typing-input { width: 100%; padding: 15px; border: 3px solid #CBD5E1; border-radius: 15px; font-size: 22px; text-align: center; text-transform: uppercase; font-weight: bold; outline: none; margin-bottom: 15px; transition: border-color 0.3s; box-sizing: border-box;}
+        .typing-input:focus { border-color: var(--primary); }
+        .typing-stats { display: flex; justify-content: space-between; background: #EEF2FF; padding: 15px; border-radius: 15px; font-weight: bold; color: var(--dark); margin-bottom: 15px; font-size: 18px;}
+        .stat-box { display: flex; flex-direction: column; align-items: center; width: 50%;}
+        .stat-val { font-size: 24px; color: var(--primary); font-weight: 900;}
+
+        /* --- KOMPONEN GAME SIMULASI KOMPUTER --- */
+        .sim-instruction { font-size: 16px; color: #065F46; font-weight: bold; margin: 15px 0; background: #D1FAE5; padding: 12px; border-radius: 12px; line-height: 1.4; border: 1px solid #A7F3D0; }
+        .sim-zone { background: #F0FDF4; border: 3px dashed #34D399; border-radius: 20px; padding: 25px; margin: 20px 0; min-height: 160px; display: flex; justify-content: center; align-items: center; font-size: 85px; cursor: pointer; user-select: none; position: relative; transition: transform 0.2s, background-color 0.2s; }
+        .sim-zone:active { transform: scale(0.98); }
+
+        /* --- KOMPONEN GAME LAINNYA --- */
+        .sentence-answer-area { min-height: 80px; border: 3px dashed #CBD5E1; border-radius: 15px; margin: 10px 0 25px 0; padding: 15px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; background: #F8FAFC; }
+        .word-pool { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; min-height: 80px; padding: 10px 0; }
+        .word-chip { background: var(--tertiary); color: white; padding: 10px 18px; border-radius: 20px; font-size: 16px; font-weight: bold; cursor: pointer; transition: transform 0.1s; user-select: none; animation: popIn 0.3s ease-out forwards; height: fit-content; margin: 0; box-shadow: 0 4px 0px #0F766E;}
+        .word-chip:active { transform: translateY(4px); box-shadow: 0 0px 0px #0F766E; }
+        .word-chip.hidden-chip { display: none !important; }
+
+        .track-container { margin: 40px 0 20px 0; position: relative; padding-bottom: 10px; border-bottom: 4px dashed #9CA3AF; }
+        .car { font-size: 45px; position: absolute; bottom: -15px; left: 0; transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.4s ease; }
+        .car.flipped { transform: scaleX(-1); }
+        .flag { position: absolute; right: 0; bottom: -15px; font-size: 45px; }
+        .math-question { font-size: 42px; font-weight: 900; color: #1F2937; margin: 25px 0; }
+        .math-options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .math-option-btn { background: white; border: 3px solid var(--secondary); color: var(--secondary); font-size: 28px; font-weight: bold; padding: 15px; border-radius: 15px; cursor: pointer; box-shadow: 0 4px 0px var(--secondary); transition: all 0.2s; }
+        .math-option-btn:hover { background: #FFFBEB; }
+        .math-option-btn:active { transform: translateY(4px); box-shadow: 0 0px 0px var(--secondary); }
+
+        .media-container { font-size: 70px; margin: 15px 0; min-height: 90px; }
+        .answer-slots { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .slot { width: 40px; height: 50px; border: 2px dashed #D1D5DB; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; color: #374151; cursor: pointer; }
+        .slot.filled { border-style: solid; border-color: var(--primary); background-color: #EEF2FF; }
+        .letters-pool { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+        .letter-btn { background-color: var(--primary); color: white; border: none; border-radius: 8px; width: 45px; height: 45px; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0px #4338CA; transition: transform 0.1s;}
+        .letter-btn:active { transform: translateY(4px); box-shadow: 0 0px 0px #4338CA; }
+        .letter-btn.hidden { visibility: hidden; }
+        #timer-display { font-weight: bold; color: var(--error); margin-bottom: 10px; font-size: 18px; }
+    </style>
+</head>
+<body>
+
+    <div class="popup-overlay" id="custom-popup">
+        <div class="popup-box">
+            <div class="popup-icon" id="popup-icon">⚠️</div>
+            <h3 class="popup-title" id="popup-title">Perhatian</h3>
+            <p class="popup-message" id="popup-message">Pesan disini</p>
+            <div class="popup-btn-group" id="popup-btn-group"></div>
+        </div>
+    </div>
+
+    <div class="game-container" id="login-page">
+        <div class="login-icon">👋</div>
+        <h1 class="landing-title">Selamat Datang!</h1>
+        <p class="landing-subtitle">Masukkan namamu untuk menyimpan rekor tercepat.</p>
+        <div class="input-group">
+            <label for="username">Nama Pemain:</label>
+            <input type="text" id="username" class="username-input" placeholder="Contoh: Budi, Alya...">
+        </div>
+        <button class="menu-btn" onclick="loginUser()">Mulai Bermain 🚀</button>
+
+        <div style="margin-top: 15px; font-size: 12px;">
+            <a href="#" onclick="showAdminLogin(); return false;" style="color: #9CA3AF; text-decoration: none;">⚙️ Login Admin</a>
+        </div>
+        <div style="margin-top: 20px; font-size: 12px; color: #9CA3AF; font-weight: bold;">
+            Informasi Aplikasi Versi 1.3 Beta
+        </div>
+    </div>
+
+    <div class="game-container" id="admin-login-page">
+        <button class="back-btn" onclick="backToMenu()">⬅️ Kembali</button>
+        <div class="login-icon">🔐</div>
+        <h1 class="landing-title">Login Admin</h1>
+        <p class="landing-subtitle">Khusus Guru / Pengawas</p>
+        <div class="input-group">
+            <input type="text" id="admin-username" class="username-input" placeholder="Username Admin">
+        </div>
+        <div class="input-group">
+            <input type="password" id="admin-password" class="username-input" placeholder="Password Admin">
+        </div>
+        <button class="menu-btn leaderboard-btn" onclick="processAdminLogin()">Login Sistem</button>
+        <div class="message" id="admin-message"></div>
+    </div>
+
+    <div class="game-container" id="admin-dashboard-page">
+        <button class="back-btn" onclick="backToMenu()">⬅️ Keluar Panel</button>
+        <div class="login-icon">⚙️</div>
+        <h1 class="landing-title">Panel Admin</h1>
+        <p class="landing-subtitle">Kelola dan unduh data performa pemain.</p>
+        <button class="menu-btn success-anim" onclick="downloadCSV()">📊 Unduh Data (CSV)</button>
+        <button class="menu-btn error-anim" onclick="confirmResetLeaderboard()">🗑️ Reset Rekor Harian</button>
+    </div>
+
+    <div class="game-container" id="landing-page">
+        <h1 class="landing-title">🎮 Portal Edukasi</h1>
+        <div class="player-greeting" id="player-greeting">Halo, Pemain!</div>
+        <button class="menu-btn sim-btn" onclick="startSimGame()">🖱️ Simulasi Perangkat</button>
+        <button class="menu-btn typing-btn" onclick="startTypingGame()">⌨️ Ketik Cepat</button>
+        <button class="menu-btn" onclick="startSpellingGame()">📝 Game Ejaan Kata</button>
+        <button class="menu-btn math-btn" onclick="startMathGame()">🏎️ Balap Matematika</button>
+        <button class="menu-btn sentence-btn" onclick="startSentenceGame()">🧱 Susun Kalimat</button>
+        <hr style="border: 1px dashed #CBD5E1; margin: 20px 0;">
+        <button class="menu-btn leaderboard-btn" onclick="showLeaderboard()">🏆 Papan Peringkat</button>
+        <button class="menu-btn" style="background: #9CA3AF;" onclick="confirmLogout()">🚪 Ganti Pemain</button>
+    </div>
+
+    <div class="game-container" id="leaderboard-page" style="overflow-y: auto; max-height: 90vh;">
+        <button class="back-btn" onclick="backToMenu()">⬅️ Kembali</button>
+        <h2 class="landing-title" style="margin-top: 30px;">🏆 Papan Peringkat</h2>
+        <div id="leaderboard-content"></div>
+    </div>
+
+    <div class="game-container" id="sim-game-area">
+        <button class="back-btn" onclick="backToMenu()">⬅️ Kembali</button>
+        <div class="level-info" style="color: #065F46;">🌱 Zona Tenang Intelijen</div>
+        <div class="level-info">Tantangan <span id="sim-level-indicator">1</span> dari 30</div>
+        <div class="sim-instruction" id="sim-instruction">Memuat instruksi...</div>
+        <div class="sim-zone" id="sim-zone" oncontextmenu="handleSimContextMenu(event)">🌸</div>
+        <div class="message" id="sim-message"></div>
+    </div>
+
+    <div class="game-container" id="typing-game-area">
+        <button class="back-btn" onclick="backToMenu()">⬅️ Kembali</button>
+        <div class="level-info">Game Mengetik (1 Menit)</div>
+        <div class="typing-stats">
+            <div class="stat-box">Waktu <span class="stat-val" id="typing-time">60</span></div>
+            <div class="stat-box">KPM <span class="stat-val" id="typing-wpm">0</span></div>
+        </div>
+        <p style="color: #6B7280; font-size: 14px; font-weight:bold; margin-bottom: 5px;">Ketik kalimat di bawah ini:</p>
+        <div class="typing-text-display" id="typing-text-display">SAYA BISA</div>
+        <input type="text" id="typing-input" class="typing-input" placeholder="Ketik di sini..." autocomplete="off" oninput="handleTypingInput(event)">
+        <div class="message" id="typing-message"></div>
+    </div>
+
+    <div class="game-container" id="game-area">
+        <button class="back-btn" onclick="backToMenu()">⬅️ Kembali</button>
+        <div class="level-info" id="level-indicator">Kata 1 dari 10</div>
+        <div id="timer-display">Waktu: <span id="time-left">30</span> detik</div>
+        <div class="media-container" id="media-display"></div>
+        <div class="answer-slots" id="answer-slots"></div>
+        <div class="letters-pool" id="letters-pool"></div>
+        <div class="message" id="message"></div>
+    </div>
+
+    <div class="game-container" id="math-game-area">
+        <button class="back-btn" onclick="backToMenu()">⬅️ Kembali</button>
+        <div class="track-container"><div class="car" id="race-car">🏎️</div><div class="flag">🏁</div></div>
+        <div class="level-info">Soal <span id="math-level-indicator">1</span> dari 10</div>
+        <div class="math-question" id="math-question">5 + 3</div>
+        <div class="math-options" id="math-options"></div>
+        <div class="message" id="math-message"></div>
+    </div>
+
+    <div class="game-container" id="sentence-game-area">
+        <button class="back-btn" onclick="backToMenu()">⬅️ Kembali</button>
+        <div class="level-info">Kalimat <span id="sentence-level-indicator">1</span> dari 10</div>
+        <p class="sentence-instruction">Ketuk kata agar menjadi kalimat yang benar!</p>
+        <div class="sentence-answer-area" id="sentence-answer-area"></div>
+        <div class="word-pool" id="sentence-word-pool"></div>
+        <div class="message" id="sentence-message"></div>
+    </div>
+
+    <script>
+        // ==========================================
+        // SISTEM CUSTOM POP-UP
+        // ==========================================
+        let popupConfirmAction = null;
+
+        function showPopup(title, message, icon, isConfirm = false, onConfirmAction = null) {
+            document.getElementById('popup-title').innerText = title;
+            document.getElementById('popup-message').innerText = message;
+            document.getElementById('popup-icon').innerText = icon;
+            const btnGroup = document.getElementById('popup-btn-group');
+            btnGroup.innerHTML = '';
+            if (isConfirm) {
+                popupConfirmAction = onConfirmAction;
+                btnGroup.innerHTML = `<button class="popup-btn popup-btn-cancel" onclick="closePopup()">Batal</button><button class="popup-btn popup-btn-ok" onclick="executePopupAction()">Ya, Lanjut</button>`;
+            } else {
+                btnGroup.innerHTML = `<button class="popup-btn popup-btn-ok" onclick="closePopup()">Oke</button>`;
+            }
+            document.getElementById('custom-popup').style.display = 'flex';
+        }
+
+        function closePopup() { document.getElementById('custom-popup').style.display = 'none'; popupConfirmAction = null; }
+        function executePopupAction() { if (popupConfirmAction) popupConfirmAction(); closePopup(); }
+
+        // ==========================================
+        // SISTEM PANEL ADMIN
+        // ==========================================
+        function showAdminLogin() {
+            hideAllScreens();
+            document.getElementById('admin-login-page').style.display = 'block';
+            document.getElementById('admin-message').innerText = "";
+        }
+
+        function processAdminLogin() {
+            const u = document.getElementById('admin-username').value;
+            const p = document.getElementById('admin-password').value;
+            const msg = document.getElementById('admin-message');
+
+            if(u === "" || p === "") {
+                msg.style.color = "var(--error)"; msg.innerText = "Harap isi username dan password."; return;
+            }
+
+            msg.style.color = "var(--dark)"; msg.innerText = "Memeriksa data...";
+
+            if (typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(function(res) {
+                    if (res.success) {
+                        hideAllScreens();
+                        document.getElementById('admin-dashboard-page').style.display = 'block';
+                        document.getElementById('admin-username').value = ""; document.getElementById('admin-password').value = "";
+                    } else { msg.style.color = "var(--error)"; msg.innerText = res.msg; }
+                }).loginAdminGS(u, p);
+            } else {
+                msg.style.color = "var(--error)"; msg.innerText = "Koneksi ke Google Apps Script gagal.";
+            }
+        }
+
+        function downloadCSV() {
+            let records = JSON.parse(localStorage.getItem('eduRecords'));
+            if (!records || Object.keys(records).length === 0) {
+                showPopup("Kosong", "Belum ada data pemain hari ini untuk diunduh.", "⚠️"); return;
+            }
+            let csvContent = "Kategori Game,Nama Pemain,Skor/Waktu\n";
+            for (let game in records) {
+                records[game].forEach(rec => { csvContent += `${game},${rec.user},${rec.time}\n`; });
+            }
+            let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "Laporan_Edukasi_" + new Date().toISOString().split('T')[0] + ".csv";
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click(); document.body.removeChild(link);
+            showPopup("Berhasil", "Laporan CSV berhasil diunduh ke perangkat Anda!", "✅");
+        }
+
+        function confirmResetLeaderboard() {
+            showPopup("Reset Data?", "Apakah Anda yakin ingin menghapus semua rekor hari ini? Data tidak bisa dikembalikan.", "🗑️", true, function() {
+                localStorage.removeItem('eduRecords'); 
+                showPopup("Berhasil", "Data papan peringkat telah dikosongkan.", "✅");
+            });
+        }
+
+        // ==========================================
+        // SISTEM LOGIN PEMAIN & LEADERBOARD
+        // ==========================================
+        let currentUser = ""; let levelStartTime = 0;
+
+        window.onload = () => {
+            const savedUser = localStorage.getItem('eduUser');
+            if(savedUser) {
+                currentUser = savedUser;
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('landing-page').style.display = 'block';
+                document.getElementById('player-greeting').innerText = `Halo, ${currentUser}!`;
+            }
+        };
+
+        function loginUser() {
+            const input = document.getElementById('username').value.trim();
+            if(input === "") { showPopup("Oops!", "Nama pemain tidak boleh kosong, ya!", "⚠️"); return; }
+            currentUser = input; localStorage.setItem('eduUser', currentUser);
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('landing-page').style.display = 'block';
+            document.getElementById('player-greeting').innerText = `Halo, ${currentUser}!`;
+            showPopup("Berhasil", `Selamat datang, ${currentUser}!`, "🌟");
+        }
+
+        function confirmLogout() { showPopup("Ganti Pemain?", "Apakah kamu yakin ingin keluar?", "🚪", true, performLogout); }
+        function performLogout() { currentUser = ""; localStorage.removeItem('eduUser'); document.getElementById('username').value = ""; hideAllScreens(); document.getElementById('login-page').style.display = 'block'; }
+        
+        function hideAllScreens() { ['login-page', 'landing-page', 'game-area', 'math-game-area', 'sentence-game-area', 'typing-game-area', 'sim-game-area', 'leaderboard-page', 'admin-login-page', 'admin-dashboard-page'].forEach(id => document.getElementById(id).style.display = 'none'); }
+        
+        function backToMenu() { 
+            if(typeof timerInterval !== 'undefined') clearInterval(timerInterval); 
+            if(typeof typingTimerInterval !== 'undefined') clearInterval(typingTimerInterval);
+            window.removeEventListener('keydown', processSimKeyboardInput);
+            hideAllScreens(); 
+            if(currentUser === "") { document.getElementById('login-page').style.display = 'block'; }
+            else { document.getElementById('landing-page').style.display = 'block'; }
+        }
+
+        function saveRecord(gameName, levelStr, valueToSave) {
+            let records = JSON.parse(localStorage.getItem('eduRecords')) || {};
+            if(!records[gameName]) records[gameName] = [];
+            records[gameName].push({ user: currentUser, level: levelStr, time: valueToSave.toFixed(2) });
+            
+            if (gameName === 'Mengetik') {
+                records[gameName].sort((a, b) => parseFloat(b.time) - parseFloat(a.time)); 
+            } else {
+                records[gameName].sort((a, b) => parseFloat(a.time) - parseFloat(b.time)); 
+            }
+            
+            records[gameName] = records[gameName].slice(0, 5); 
+            localStorage.setItem('eduRecords', JSON.stringify(records));
+        }
+
+        function showLeaderboard() {
+            hideAllScreens(); document.getElementById('leaderboard-page').style.display = 'block';
+            const content = document.getElementById('leaderboard-content');
+            let records = JSON.parse(localStorage.getItem('eduRecords')) || {};
+            content.innerHTML = "";
+            const gamesMap = { 
+                'Simulasi': '🖱️ Simulasi Perangkat (Waktu Tercepat)',
+                'Mengetik': '⌨️ Ketik Cepat (Kata per Menit)',
+                'Ejaan': '📝 Ejaan Kata (Waktu Tercepat)', 
+                'Math': '🏎️ Balap Matematika (Waktu Tercepat)', 
+                'Kalimat': '🧱 Susun Kalimat (Waktu Tercepat)' 
+            };
+
+            for(let key in gamesMap) {
+                let section = `<div class="leaderboard-section"><h3 class="leaderboard-title">${gamesMap[key]}</h3>`;
+                if(!records[key] || records[key].length === 0) {
+                    section += `<div class="empty-record">Belum ada rekor. Mainkan sekarang!</div>`;
+                } else {
+                    records[key].forEach((rec, idx) => {
+                        let rank = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}.`;
+                        let unit = key === 'Mengetik' ? ' KPM' : ' dtk';
+                        section += `<div class="record-item"><span>${rank} <span class="record-user">${rec.user}</span></span><span class="record-time">${rec.time}${unit}</span></div>`;
+                    });
+                }
+                section += `</div>`; content.innerHTML += section;
+            }
+        }
+
+        function shuffleArray(array) {
+            let cur = array.length, rand;
+            while (cur != 0) { rand = Math.floor(Math.random() * cur); cur--; [array[cur], array[rand]] = [array[rand], array[cur]]; } 
+            return array;
+        }
+
+        // ==========================================
+        // LOGIKA GAME SIMULASI KOMPUTER (30 TANTANGAN)
+        // ==========================================
+        const simDatabase = [
+            { type: "click", media: "🌸", desc: "Klik Kiri (atau Ketuk) sekali pada Bunga Indah ini agar mekar." },
+            { type: "contextmenu", media: "🪨", desc: "Klik Kanan (atau Tahan Lama) pada Batu Tenang ini untuk melihat rahasia." },
+            { type: "keydown", key: " ", media: "☁️", desc: "Tekan tombol SPASI (Spacebar) pada papan ketik untuk meniup awan." },
+            { type: "keydown", key: "Enter", media: "🌱", desc: "Tekan tombol ENTER pada papan ketik untuk menyiram tunas hijau." },
+            { type: "dblclick", media: "🥚", desc: "Klik Dua Kali (Double Click) dengan cepat pada Telur agar menetas." },
+            { type: "keydown", key: "ArrowUp", media: "🎈", desc: "Tekan tombol PANAH ATAS (⬆️) pada papan ketik untuk menerbangkan balon." },
+            { type: "keydown", key: "ArrowDown", media: "⚓", desc: "Tekan tombol PANAH BAWAH (⬇️) pada papan ketik untuk menurunkan jangkar." },
+            { type: "click", media: "🐢", desc: "Klik Kiri (atau Ketuk) pada Kura-kura Lambat agar dia berjalan." },
+            { type: "keydown", key: "A", media: "A", desc: "Tekan tombol huruf 'A' pada papan ketik untuk memilih opsi pintar." },
+            { type: "dblclick", media: "💎", desc: "Klik Dua Kali (Double Click) pada Kotak Kaca untuk mengambil Berlian." },
+            { type: "keydown", key: "ArrowLeft", media: "🦀", desc: "Tekan tombol PANAH KIRI (⬅️) untuk membantu Kepiting berjalan ke pantai." },
+            { type: "keydown", key: "ArrowRight", media: "⛵", desc: "Tekan tombol PANAH KANAN (➡️) untuk mendorong Perahu Layar tertiup angin." },
+            { type: "click", media: "🍎", desc: "Klik Kiri sekali pada Apel Merah untuk memetiknya dari pohon ramah." },
+            { type: "contextmenu", media: "🪵", desc: "Klik Kanan (atau Tahan Lama) pada Kayu Tua untuk melihat Jamur tersembunyi." },
+            { type: "dblclick", media: "📦", desc: "Klik Dua Kali dengan cepat pada Paket Misteri untuk membuka hadiahnya." },
+            { type: "keydown", key: "B", media: "Bee", desc: "Tekan tombol huruf 'B' pada papan ketik untuk memanggil Lebah madu." },
+            { type: "keydown", key: " ", media: "🌊", desc: "Tekan tombol SPASI (Spacebar) untuk membuat Ombak laut menari tenang." },
+            { type: "keydown", key: "Enter", media: "🚪", desc: "Tekan tombol ENTER untuk membuka Pintu gerbang istana impian." },
+            { type: "click", media: "🔔", desc: "Klik Kiri sekali pada Lonceng Emas untuk membunyikan suara merdu." },
+            { type: "dblclick", media: "💡", desc: "Klik Dua Kali dengan cepat pada Lampu untuk menerangi kamar." },
+            { type: "keydown", key: "ArrowUp", media: "🦅", desc: "Tekan tombol PANAH ATAS (⬆️) agar Burung Elang terbang tinggi menembus langit." },
+            { type: "contextmenu", media: "貝", desc: "Klik Kanan (atau Tahan Lama) pada Kerang Laut untuk mendengarkan suara pantai." },
+            { type: "keydown", key: "C", media: "🐱", desc: "Tekan tombol huruf 'C' pada papan ketik untuk memberi makan Kucing lucu." },
+            { type: "click", media: "🍃", desc: "Klik Kiri sekali pada Daun Hijau jatuh untuk menyimpannya di buku." },
+            { type: "keydown", key: " ", media: "🪐", desc: "Tekan tombol SPASI (Spacebar) untuk membuat Planet berputar di angkasa luar." },
+            { type: "dblclick", media: "🧪", desc: "Klik Dua Kali dengan cepat pada Ramuan Ajaib agar berubah warna warni." },
+            { type: "keydown", key: "ArrowRight", media: "🏃", desc: "Tekan tombol PANAH KANAN (➡️) untuk membantu anak itu berlari santai di taman." },
+            { type: "keydown", key: "Enter", media: "✉️", desc: "Tekan tombol ENTER untuk mengirim Surat bahagia kepada sahabat." },
+            { type: "contextmenu", media: "🗺️", desc: "Klik Kanan (atau Tahan Lama) pada Peta Tua untuk menemukan harta karun." },
+            { type: "click", media: "🌟", desc: "Klik Kiri sekali pada Bintang Kejora malam agar bersinar sangat terang." }
+        ];
+        let simLevelIdx = 0;
+
+        function startSimGame() {
+            hideAllScreens();
+            document.getElementById('sim-game-area').style.display = 'block';
+            simLevelIdx = 0;
+            levelStartTime = Date.now();
+            
+            const zone = document.getElementById('sim-zone');
+            zone.onclick = handleSimClick;
+            zone.ondblclick = handleSimDblClick;
+            
+            window.addEventListener('keydown', processSimKeyboardInput);
+            loadSimLevel();
+        }
+
+        function loadSimLevel() {
+            if (simLevelIdx >= simDatabase.length) {
+                window.removeEventListener('keydown', processSimKeyboardInput);
+                let timeTaken = (Date.now() - levelStartTime) / 1000;
+                saveRecord('Simulasi', null, timeTaken);
+                showPopup("Damai Sekali...", `Luar biasa! Kamu menyelesaikan seluruh 30 simulasi dalam waktu ${timeTaken.toFixed(2)} detik dengan tenang!`, "🍃", false, backToMenu);
+                return;
+            }
+            document.getElementById('sim-level-indicator').innerText = simLevelIdx + 1;
+            document.getElementById('sim-message').innerText = "";
+            
+            const currentTask = simDatabase[simLevelIdx];
+            document.getElementById('sim-instruction').innerText = currentTask.desc;
+            
+            const zone = document.getElementById('sim-zone');
+            zone.innerText = currentTask.media;
+            zone.style.backgroundColor = "#F0FDF4";
+            zone.style.borderColor = "#34D399";
+        }
+
+        function triggerSimSuccess() {
+            const zone = document.getElementById('sim-zone');
+            const msg = document.getElementById('sim-message');
+            zone.style.backgroundColor = "#D1FAE5";
+            zone.style.borderColor = "var(--success)";
+            msg.style.color = "var(--success)";
+            msg.innerText = "✨ Sempurna & Tenang ✨";
+            
+            setTimeout(() => {
+                simLevelIdx++;
+                loadSimLevel();
+            }, 1200);
+        }
+
+        function handleSimClick(e) {
+            if (simDatabase[simLevelIdx].type === "click") {
+                triggerSimSuccess();
+            }
+        }
+
+        function handleSimDblClick(e) {
+            if (simDatabase[simLevelIdx].type === "dblclick") {
+                triggerSimSuccess();
+            }
+        }
+
+        function handleSimContextMenu(e) {
+            e.preventDefault();
+            if (simDatabase[simLevelIdx].type === "contextmenu") {
+                triggerSimSuccess();
+            }
+        }
+
+        function processSimKeyboardInput(e) {
+            const currentTask = simDatabase[simLevelIdx];
+            if (currentTask.type === "keydown") {
+                if (currentTask.key.length === 1) {
+                    if (e.key.toUpperCase() === currentTask.key.toUpperCase()) {
+                        triggerSimSuccess();
+                    }
+                } else {
+                    if (e.key === currentTask.key) {
+                        triggerSimSuccess();
+                    }
+                }
+            }
+        }
+
+        // ==========================================
+        // LOGIKA GAME KETIK CEPAT
+        // ==========================================
+        const typingDatabase = [
+            "SAYA ANAK PINTAR", "IBU BELI SAYUR", "BAPAK MINUM KOPI", "KUCING SUKA IKAN", 
+            "BURUNG TERBANG TINGGI", "ADIK MAIN BOLA", "KAKAK BACA BUKU", "SAYA CINTA INDONESIA", 
+            "PISANG WARNA KUNING", "APEL WARNA MERAH", "KELINCI MAKAN WORTEL", "GURU MENGAJAR",
+            "SAYA SUKA SEKOLAH", "BUKU ADALAH TEMAN", "KITA HARUS RAJIN", "AYO BELAJAR BERSAMA",
+            "MATAHARI BERSINAR", "BULAN DAN BINTANG", "KAMI PERGI BERMAIN", "JAGA KEBERSIHAN"
+        ];
+        let typingTimeLeft = 60, typingTimerInterval, currentTypingWord = "", typedWordsCount = 0;
+
+        function startTypingGame() {
+            hideAllScreens();
+            document.getElementById('typing-game-area').style.display = 'block';
+            typingTimeLeft = 60;
+            typedWordsCount = 0;
+            document.getElementById('typing-time').innerText = typingTimeLeft;
+            document.getElementById('typing-wpm').innerText = "0";
+            
+            const inputEl = document.getElementById('typing-input');
+            inputEl.disabled = false;
+            inputEl.value = "";
+            inputEl.focus();
+            document.getElementById('typing-message').innerText = "";
+            nextTypingWord();
+            
+            clearInterval(typingTimerInterval);
+            typingTimerInterval = setInterval(() => {
+                typingTimeLeft--;
+                document.getElementById('typing-time').innerText = typingTimeLeft;
+                
+                let timeElapsed = 60 - typingTimeLeft;
+                let currentWPM = timeElapsed > 0 ? Math.round((typedWordsCount / (timeElapsed / 60))) : 0;
+                document.getElementById('typing-wpm').innerText = currentWPM;
+
+                if (typingTimeLeft <= 0) {
+                    endTypingGame();
+                }
+            }, 1000);
+        }
+
+        function nextTypingWord() {
+            currentTypingWord = typingDatabase[Math.floor(Math.random() * typingDatabase.length)];
+            document.getElementById('typing-text-display').innerText = currentTypingWord;
+            document.getElementById('typing-input').value = "";
+        }
+
+        function handleTypingInput(e) {
+            const inputVal = e.target.value.toUpperCase();
+            if (inputVal === currentTypingWord) {
+                typedWordsCount += currentTypingWord.split(" ").length; 
+                
+                document.getElementById('typing-message').style.color = "var(--success)";
+                document.getElementById('typing-message').innerText = "Hebat!";
+                
+                const displayEl = document.getElementById('typing-text-display');
+                displayEl.classList.add('success-anim');
+                setTimeout(() => displayEl.classList.remove('success-anim'), 300);
+                setTimeout(() => document.getElementById('typing-message').innerText = "", 500);
+                
+                nextTypingWord();
+            }
+        }
+
+        function endTypingGame() {
+            clearInterval(typingTimerInterval);
+            let finalWPM = typedWordsCount; 
+            saveRecord('Mengetik', null, finalWPM);
+            document.getElementById('typing-input').disabled = true;
+            showPopup("Waktu Habis!", `Luar biasa! Kecepatan mengetikmu: ${finalWPM} Kata Per Menit (KPM).`, "⌨️", false, backToMenu);
+        }
+
+        // ==========================================
+        // LOGIKA GAME SUSUN KALIMAT
+        // ==========================================
+        const sentenceDatabase = [
+            "SAYA SUKA MAKAN APEL", "IBU PERGI KE PASAR", "ADIK BERMAIN BOLA", "KAMI MEMBACA BUKU", "KUCING MINUM SUSU",
+            "AYAH PERGI KE KANTOR", "KAKAK MENYAPU LANTAI", "BURUNG TERBANG TINGGI", "IKAN BERENANG DI AIR", "SAPI MAKAN RUMPUT",
+            "GURU MENGAJAR DI KELAS", "SAYA PUNYA SEPATU BARU", "KAMI BERMAIN LAYANG LAYANG", "RUMAH KAKEK DI DESA", "HUJAN TURUN SANGAT DERAS",
+            "MATAHARI BERSINAR TERANG", "BULAN BERSINAR MALAM HARI", "BINTANG BERKELAP KELIP", "SAYA BANGUN TIDUR PAGI", "IBU MEMASAK NASI GORENG",
+            "AYAH MINUM KOPI PANAS", "ADIK MAKAN COKELAT", "KAKAK MENGERJAKAN TUGAS", "KAMI PERGI JALAN JALAN", "NENEK BERCERITA KISAH LAMA",
+            "SAYA SUKA BACA BUKU", "TEMAN SAYA BERNAMA BUDI", "KITA HARUS RAJIN BELAJAR", "JANGAN LUPA CUCI TANGAN", "BUANG SAMPAH PADA TEMPAT",
+            "SAYA ANAK YANG PINTAR", "KAMU SANGAT HEBAT SEKALI", "BENDERA KITA MERAH PUTIH", "SAYA CINTA TANAH AIR", "MEJA BELAJAR WARNA COKELAT",
+            "KURSI INI SANGAT EMPUK", "PENSIL SAYA PANJANG SEKALI", "KAMI SEDANG OLAHRAGA PAGI", "GIGI SAYA PUTIH BERSIH", "RAMBUT KAKAK SANGAT PANJANG",
+            "KAMI MENONTON TV BERSAMA", "KUCING ITU SEDANG TIDUR", "ANJING ITU MENGGONGGONG KERAS", "BEBEK BERENANG DI KOLAM", "AYAM JAGO BERKOKOK PAGI",
+            "SAYA SUKA MAKAN SAYUR", "BUAH JERUK RASANYA MANIS", "POHON MANGGA ITU BERBUAH", "TAMAN INI SANGAT INDAH", "KAMI BELAJAR BERHITUNG ANGKA"
+        ];
+        let currentSentenceLvl = 0, expectedWords = [], currentSelectedWords = [], kalimatActiveData = [];
+
+        function startSentenceGame() { 
+            hideAllScreens(); document.getElementById('sentence-game-area').style.display = 'block'; 
+            currentSentenceLvl = 0; kalimatActiveData = shuffleArray([...sentenceDatabase]).slice(0, 10); 
+            levelStartTime = Date.now(); loadSentenceLevel(); 
+        }
+
+        function loadSentenceLevel() {
+            if (currentSentenceLvl >= kalimatActiveData.length) {
+                let timeTaken = (Date.now() - levelStartTime) / 1000; saveRecord('Kalimat', null, timeTaken);
+                document.getElementById('sentence-message').innerText = "";
+                document.getElementById('sentence-answer-area').innerHTML = ""; document.getElementById('sentence-word-pool').innerHTML = ""; 
+                showPopup("Hebat!", `Semua kalimat berhasil disusun dalam waktu ${timeTaken.toFixed(2)} detik!`, "🎉", false, backToMenu); return;
+            }
+            document.getElementById('sentence-level-indicator').innerText = currentSentenceLvl + 1;
+            document.getElementById('sentence-message').innerText = "";
+            const answerArea = document.getElementById('sentence-answer-area'), poolArea = document.getElementById('sentence-word-pool');
+            answerArea.innerHTML = ""; poolArea.innerHTML = ""; answerArea.style.borderColor = "#CBD5E1"; answerArea.style.backgroundColor = "#F8FAFC";
+            currentSelectedWords = []; expectedWords = kalimatActiveData[currentSentenceLvl].split(" ");
+            let shuffledWords = shuffleArray([...expectedWords]);
+            shuffledWords.forEach((word) => {
+                let chip = document.createElement('div'); chip.className = 'word-chip'; chip.innerText = word;
+                chip.onclick = () => moveWordToAnswer(word, chip); poolArea.appendChild(chip);
+            });
+        }
+
+        function moveWordToAnswer(word, poolChipElement) {
+            const answerArea = document.getElementById('sentence-answer-area');
+            poolChipElement.classList.add('hidden-chip');
+            let answerChip = document.createElement('div'); answerChip.className = 'word-chip'; answerChip.innerText = word;
+            answerChip.onclick = () => removeWordFromAnswer(word, answerChip, poolChipElement);
+            answerArea.appendChild(answerChip); currentSelectedWords.push(word);
+            if (currentSelectedWords.length === expectedWords.length) checkSentenceAnswer();
+        }
+
+        function removeWordFromAnswer(word, answerChipElement, poolChipElement) {
+            currentSelectedWords.splice(currentSelectedWords.lastIndexOf(word), 1); answerChipElement.remove(); poolChipElement.classList.remove('hidden-chip');
+            document.getElementById('sentence-message').innerText = "";
+        }
+
+        function checkSentenceAnswer() {
+            const formed = currentSelectedWords.join(" "), correct = expectedWords.join(" ");
+            const msgEl = document.getElementById('sentence-message'), answerArea = document.getElementById('sentence-answer-area');
+            const allAnswerChips = answerArea.querySelectorAll('.word-chip');
+            allAnswerChips.forEach(chip => chip.style.pointerEvents = 'none');
+
+            if (formed === correct) {
+                msgEl.style.color = "var(--success)"; msgEl.innerText = `🌟 Sempurna!`;
+                answerArea.style.borderColor = "var(--success)"; answerArea.style.backgroundColor = "#D1FAE5";
+                allAnswerChips.forEach(chip => chip.classList.add('success-anim'));
+                setTimeout(() => { currentSentenceLvl++; loadSentenceLevel(); }, 1500);
+            } else {
+                msgEl.style.color = "var(--error)"; msgEl.innerText = "Ups! Susunannya masih kurang pas.";
+                answerArea.classList.add('error-anim');
+                setTimeout(() => { answerArea.classList.remove('error-anim'); allAnswerChips.forEach(chip => chip.click()); allAnswerChips.forEach(chip => chip.style.pointerEvents = 'auto'); }, 1500);
+            }
+        }
+
+        // ==========================================
+        // LOGIKA GAME BALAP MATEMATIKA
+        // ==========================================
+        const mathDatabase = [
+            {q: "5 + 4", a: 9}, {q: "7 + 3", a: 10}, {q: "8 + 5", a: 13}, {q: "6 + 6", a: 12}, {q: "9 + 2", a: 11},
+            {q: "10 + 5", a: 15}, {q: "12 + 3", a: 15}, {q: "7 + 7", a: 14}, {q: "8 + 8", a: 16}, {q: "9 + 4", a: 13},
+            {q: "11 + 4", a: 15}, {q: "15 + 5", a: 20}, {q: "13 + 2", a: 15}, {q: "6 + 8", a: 14}, {q: "14 + 3", a: 17},
+            {q: "10 - 5", a: 5}, {q: "8 - 3", a: 5}, {q: "12 - 4", a: 8}, {q: "15 - 5", a: 10}, {q: "9 - 2", a: 7},
+            {q: "11 - 6", a: 5}, {q: "14 - 7", a: 7}, {q: "10 - 8", a: 2}, {q: "7 - 4", a: 3}, {q: "13 - 9", a: 4},
+            {q: "2 x 3", a: 6}, {q: "3 x 3", a: 9}, {q: "4 x 2", a: 8}, {q: "5 x 3", a: 15}, {q: "6 x 2", a: 12},
+            {q: "7 x 2", a: 14}, {q: "4 x 4", a: 16}, {q: "5 x 4", a: 20}, {q: "3 x 5", a: 15}, {q: "2 x 8", a: 16},
+            {q: "5 x 5", a: 25}, {q: "6 x 3", a: 18}, {q: "4 x 5", a: 20}, {q: "2 x 9", a: 18}, {q: "3 x 4", a: 12},
+            {q: "10 ÷ 2", a: 5}, {q: "6 ÷ 2", a: 3}, {q: "8 ÷ 2", a: 4}, {q: "9 ÷ 3", a: 3}, {q: "12 ÷ 3", a: 4},
+            {q: "15 ÷ 3", a: 5}, {q: "20 ÷ 4", a: 5}, {q: "16 ÷ 4", a: 4}, {q: "12 ÷ 4", a: 3}, {q: "10 ÷ 5", a: 2}
+        ];
+        
+        let mathProgress = 0, mathCorrectAnswer = 0, mathQuestionCount = 1, mathActiveData = [];
+
+        function startMathGame() { 
+            hideAllScreens(); document.getElementById('math-game-area').style.display = 'block'; 
+            mathProgress = 0; mathQuestionCount = 1; document.getElementById('race-car').classList.remove('flipped'); 
+            mathActiveData = shuffleArray([...mathDatabase]).slice(0, 10); 
+            levelStartTime = Date.now(); updateCarPosition(); generateMathQuestion(); 
+        }
+
+        function generateMathQuestion() {
+            document.getElementById('math-level-indicator').innerText = mathQuestionCount;
+            document.getElementById('math-message').innerText = "";
+            const currentData = mathActiveData[mathQuestionCount - 1]; mathCorrectAnswer = currentData.a;
+            document.getElementById('math-question').innerText = currentData.q;
+            let options = [mathCorrectAnswer];
+            while(options.length < 4) { 
+                let wrong = mathCorrectAnswer + Math.floor(Math.random() * 11) - 5; 
+                if(wrong >= 0 && !options.includes(wrong) && wrong !== mathCorrectAnswer) options.push(wrong); 
+            }
+            options = shuffleArray(options);
+            const container = document.getElementById('math-options'); container.innerHTML = '';
+            options.forEach(opt => {
+                let btn = document.createElement('button'); btn.className = 'math-option-btn'; btn.innerText = opt;
+                btn.onclick = () => checkMathAnswer(opt, btn); container.appendChild(btn);
+            });
+        }
+
+        function checkMathAnswer(selectedAnswer, btnElement) {
+            const msgEl = document.getElementById('math-message'), carEl = document.getElementById('race-car');
+            document.querySelectorAll('.math-option-btn').forEach(b => b.disabled = true);
+            
+            if (selectedAnswer === mathCorrectAnswer) {
+                carEl.classList.remove('flipped'); btnElement.classList.add('success-anim'); 
+                msgEl.style.color = "var(--success)"; msgEl.innerText = "🌟 Hebat! Mobil melaju."; mathProgress += 10; 
+            } else {
+                carEl.classList.add('flipped'); btnElement.classList.add('error-anim'); 
+                msgEl.style.color = "var(--error)"; msgEl.innerText = "Ups! Mobilmu mundur."; mathProgress -= 10; 
+                if (mathProgress < 0) mathProgress = 0; 
+            }
+            
+            updateCarPosition();
+            
+            setTimeout(() => { 
+                btnElement.classList.remove('success-anim', 'error-anim'); carEl.classList.remove('flipped'); 
+                if (mathProgress >= 100) {
+                    let timeTaken = (Date.now() - levelStartTime) / 1000; saveRecord('Math', null, timeTaken);
+                    showPopup("Garis Finish!", `Kamu menyelesaikan balapan dalam ${timeTaken.toFixed(2)} detik!`, "🏁", false, backToMenu);
+                } else if (mathQuestionCount >= 10) {
+                    showPopup("Waktu Habis...", "Kamu sudah menjawab 10 soal tapi mobil belum sampai finish. Tetap semangat dan coba lagi yuk!", "💥", false, backToMenu);
+                } else { mathQuestionCount++; generateMathQuestion(); document.querySelectorAll('.math-option-btn').forEach(b => b.disabled = false); msgEl.innerText = ""; }
+            }, 1200); 
+        }
+        function updateCarPosition() { document.getElementById('race-car').style.left = `calc(${mathProgress}% - ${(mathProgress/100) * 45}px)`; }
+
+        // ==========================================
+        // LOGIKA GAME EJAAN KATA
+        // ==========================================
+        const spellingDatabase = [
+            {media: "🍎", jawaban: "APEL"}, {media: "🍌", jawaban: "PISANG"}, {media: "🍇", jawaban: "ANGGUR"}, {media: "🍉", jawaban: "SEMANGKA"}, {media: "🍓", jawaban: "STROBERI"},
+            {media: "🍒", jawaban: "CERI"}, {media: "🍑", jawaban: "PERSIK"}, {media: "🥭", jawaban: "MANGGA"}, {media: "🍍", jawaban: "NANAS"}, {media: "🥥", jawaban: "KELAPA"},
+            {media: "🥝", jawaban: "KIWI"}, {media: "🍅", jawaban: "TOMAT"}, {media: "🍆", jawaban: "TERONG"}, {media: "🥑", jawaban: "ALPUKAT"}, {media: "🥦", jawaban: "BROKOLI"},
+            {media: "🌽", jawaban: "JAGUNG"}, {media: "🥕", jawaban: "WORTEL"}, {media: "🧅", jawaban: "BAWANG"}, {media: "🍄", jawaban: "JAMUR"}, {media: "🍞", jawaban: "ROTI"},
+            {media: "🧀", jawaban: "KEJU"}, {media: "🥚", jawaban: "TELUR"}, {media: "🍔", jawaban: "BURGER"}, {media: "🍟", jawaban: "KENTANG"}, {media: "🍕", jawaban: "PIZZA"},
+            {media: "🌭", jawaban: "SOSIS"}, {media: "🍩", jawaban: "DONAT"}, {media: "🍰", jawaban: "KUE"}, {media: "🍫", jawaban: "COKELAT"}, {media: "🍬", jawaban: "PERMEN"},
+            {media: "🍯", jawaban: "MADU"}, {media: "🥛", jawaban: "SUSU"}, {media: "☕", jawaban: "KOPI"}, {media: "🍵", jawaban: "TEH"}, {media: "🐶", jawaban: "ANJING"},
+            {media: "🐱", jawaban: "KUCING"}, {media: "🐭", jawaban: "TIKUS"}, {media: "🐰", jawaban: "KELINCI"}, {media: "🐻", jawaban: "BERUANG"}, {media: "🐼", jawaban: "PANDA"},
+            {media: "🐯", jawaban: "HARIMAU"}, {media: "🦁", jawaban: "SINGA"}, {media: "🐮", jawaban: "SAPI"}, {media: "🐸", jawaban: "KATAK"}, {media: "🐵", jawaban: "MONYET"},
+            {media: "🐔", jawaban: "AYAM"}, {media: "🐧", jawaban: "PENGUIN"}, {media: "🐦", jawaban: "BURUNG"}, {media: "🦆", jawaban: "BEBEK"}, {media: "🐟", jawaban: "IKAN"},
+            {media: "🦉", jawaban: "HANTU"}
+        ];
+
+        let spellingActiveData = [], spellingLevelIndex = 0, currentWord = "", selectedLetters = [], timeLeft = 30, timerInterval;
+
+        function startSpellingGame() { 
+            hideAllScreens(); document.getElementById('game-area').style.display = 'block'; 
+            spellingLevelIndex = 0; spellingActiveData = shuffleArray([...spellingDatabase]).slice(0, 10); 
+            levelStartTime = Date.now(); loadSpellingLevel(); 
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval); timeLeft = 30; document.getElementById('time-left').innerText = timeLeft;
+            timerInterval = setInterval(() => {
+                timeLeft--; document.getElementById('time-left').innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval); document.getElementById('message').style.color = "var(--error)"; document.getElementById('message').innerText = "Waktu Habis!";
+                    document.querySelectorAll('.letter-btn').forEach(btn => btn.classList.add('hidden'));
+                    setTimeout(() => { spellingLevelIndex++; loadSpellingLevel(); }, 1500);
+                }
+            }, 1000);
+        }
+
+        function loadSpellingLevel() {
+            clearInterval(timerInterval);
+            if (spellingLevelIndex >= spellingActiveData.length) {
+                let timeTaken = (Date.now() - levelStartTime) / 1000; saveRecord('Ejaan', null, timeTaken);
+                document.getElementById('message').innerText = "";
+                document.getElementById('answer-slots').innerHTML = ""; document.getElementById('letters-pool').innerHTML = "";
+                showPopup("Selamat!", `Kamu berhasil mengeja 10 kata dalam waktu ${timeTaken.toFixed(2)} detik!`, "🎉", false, backToMenu); return;
+            }
+
+            const level = spellingActiveData[spellingLevelIndex]; currentWord = level.jawaban ? level.jawaban.toUpperCase() : "SINGA"; selectedLetters = new Array(currentWord.length).fill(null);
+            document.getElementById('level-indicator').innerText = `Kata ${spellingLevelIndex + 1} dari 10`;
+            document.getElementById('message').innerText = ""; document.getElementById('media-display').innerHTML = level.media; 
+            
+            const slotsContainer = document.getElementById('answer-slots'); slotsContainer.innerHTML = "";
+            for (let i = 0; i < currentWord.length; i++) {
+                const slot = document.createElement('div'); slot.className = 'slot'; slot.addEventListener('click', () => removeLetter(i)); slotsContainer.appendChild(slot);
+            }
+            const poolContainer = document.getElementById('letters-pool'); poolContainer.innerHTML = "";
+            let lettersArray = shuffleArray(currentWord.split(''));
+            lettersArray.forEach((letter) => {
+                const btn = document.createElement('button'); btn.className = 'letter-btn'; btn.innerText = letter;
+                btn.addEventListener('click', () => addLetter(letter, btn)); poolContainer.appendChild(btn);
+            });
+            startTimer();
+        }
+
+        function addLetter(letter, btnElement) {
+            const emptyIndex = selectedLetters.indexOf(null);
+            if (emptyIndex !== -1) {
+                selectedLetters[emptyIndex] = { letter: letter, btn: btnElement };
+                const slot = document.getElementById('answer-slots').children[emptyIndex];
+                slot.innerText = letter; slot.classList.add('filled'); btnElement.classList.add('hidden');
+                if (!selectedLetters.includes(null)) checkSpellingAnswer();
+            }
+        }
+
+        function removeLetter(slotIndex) {
+            const slotData = selectedLetters[slotIndex];
+            if (slotData !== null) {
+                slotData.btn.classList.remove('hidden'); selectedLetters[slotIndex] = null;
+                const slot = document.getElementById('answer-slots').children[slotIndex]; slot.innerText = ""; slot.classList.remove('filled', 'error-anim');
+            }
+        }
+
+        function checkSpellingAnswer() {
+            const formedWord = selectedLetters.map(item => item.letter).join('');
+            const slots = document.querySelectorAll('.slot'), messageEl = document.getElementById('message');
+            if (formedWord === currentWord) {
+                clearInterval(timerInterval); 
+                messageEl.style.color = "var(--success)"; messageEl.innerText = `Benar!`;
+                slots.forEach(slot => slot.classList.add('success-anim'));
+                setTimeout(() => { spellingLevelIndex++; loadSpellingLevel(); }, 1200);
+            } else {
+                messageEl.style.color = "var(--error)"; messageEl.innerText = "Ups! Coba lagi.";
+                slots.forEach(slot => { slot.classList.add('error-anim'); setTimeout(() => slot.classList.remove('error-anim'), 400); });
+            }
+        }
+    </script>
+</body>
+</html>
